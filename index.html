@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>專案看板 - Project Kanban</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2rem;
+        }
+        
+        .board {
+            display: flex;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            overflow-x: auto;
+            padding-bottom: 20px;
+        }
+        
+        .column {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            min-width: 300px;
+            max-width: 300px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        .column-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+        }
+        
+        .column-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .task-count {
+            background: #667eea;
+            color: white;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+        
+        .todo .task-count { background: #f093fb; }
+        .inprogress .task-count { background: #4facfe; }
+        .done .task-count { background: #43e97b; }
+        
+        .task-list {
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .task {
+            background: white;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 12px;
+            cursor: grab;
+            transition: all 0.2s;
+            position: relative;
+        }
+        
+        .task:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        
+        .task.dragging {
+            opacity: 0.5;
+            cursor: grabbing;
+        }
+        
+        .task-title {
+            font-size: 0.95rem;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        
+        .task-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            color: #999;
+        }
+        
+        .task-priority {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+        }
+        
+        .priority-high { background: #ff6b6b; color: white; }
+        .priority-medium { background: #ffd93d; color: #333; }
+        .priority-low { background: #6bcb77; color: white; }
+        
+        .task-actions {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            display: none;
+            gap: 5px;
+        }
+        
+        .task:hover .task-actions {
+            display: flex;
+        }
+        
+        .task-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        
+        .task-btn:hover {
+            background: #eee;
+        }
+        
+        .task-btn.delete:hover {
+            background: #ff6b6b;
+            color: white;
+        }
+        
+        .add-task {
+            width: 100%;
+            padding: 10px;
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            background: none;
+            cursor: pointer;
+            color: #999;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            margin-top: 10px;
+        }
+        
+        .add-task:hover {
+            border-color: #667eea;
+            color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            width: 90%;
+            max-width: 400px;
+        }
+        
+        .modal-title {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #eee;
+            color: #333;
+        }
+        
+        .btn:hover {
+            opacity: 0.9;
+        }
+        
+        @media (max-width: 768px) {
+            .board {
+                flex-direction: column;
+            }
+            
+            .column {
+                max-width: 100%;
+                min-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>📋 專案看板 - Project Kanban</h1>
+    
+    <div class="board">
+        <!-- To Do -->
+        <div class="column todo" data-status="todo">
+            <div class="column-header">
+                <span class="column-title">📝 待處理</span>
+                <span class="task-count">0</span>
+            </div>
+            <div class="task-list" id="todo-list"></div>
+            <button class="add-task" onclick="openModal('todo')">+ 新增任務</button>
+        </div>
+        
+        <!-- In Progress -->
+        <div class="column inprogress" data-status="inprogress">
+            <div class="column-header">
+                <span class="column-title">🔥 進行中</span>
+                <span class="task-count">0</span>
+            </div>
+            <div class="task-list" id="inprogress-list"></div>
+            <button class="add-task" onclick="openModal('inprogress')">+ 新增任務</button>
+        </div>
+        
+        <!-- Done -->
+        <div class="column done" data-status="done">
+            <div class="column-header">
+                <span class="column-title">✅ 已完成</span>
+                <span class="task-count">0</span>
+            </div>
+            <div class="task-list" id="done-list"></div>
+            <button class="add-task" onclick="openModal('done')">+ 新增任務</button>
+        </div>
+    </div>
+    
+    <!-- Task Modal -->
+    <div class="modal" id="task-modal">
+        <div class="modal-content">
+            <h3 class="modal-title">新增任務</h3>
+            <div class="form-group">
+                <label>任務名稱</label>
+                <input type="text" id="task-title" placeholder="輸入任務名稱">
+            </div>
+            <div class="form-group">
+                <label>優先級</label>
+                <select id="task-priority">
+                    <option value="low">🟢 低</option>
+                    <option value="medium">🟡 中</option>
+                    <option value="high">🔴 高</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+                <button class="btn btn-primary" onclick="saveTask()">儲存</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Data
+        let tasks = JSON.parse(localStorage.getItem('kanban-tasks')) || [];
+        let currentStatus = 'todo';
+        let editingTaskId = null;
+        
+        // Drag state
+        let draggedTask = null;
+        
+        // Render
+        function render() {
+            const columns = ['todo', 'inprogress', 'done'];
+            
+            columns.forEach(status => {
+                const list = document.getElementById(`${status}-list`);
+                const count = document.querySelector(`.${status} .task-count`);
+                const statusTasks = tasks.filter(t => t.status === status);
+                
+                list.innerHTML = statusTasks.map(task => `
+                    <div class="task" draggable="true" data-id="${task.id}" ondragstart="dragStart(event)" ondragend="dragEnd(event)">
+                        <div class="task-actions">
+                            <button class="task-btn" onclick="editTask(${task.id})">✏️</button>
+                            <button class="task-btn delete" onclick="deleteTask(${task.id})">🗑️</button>
+                        </div>
+                        <div class="task-title">${task.title}</div>
+                        <div class="task-meta">
+                            <span class="task-priority priority-${task.priority}">
+                                ${task.priority === 'high' ? '🔴 高' : task.priority === 'medium' ? '🟡 中' : '🟢 低'}
+                            </span>
+                            <span>${new Date(task.created).toLocaleDateString('zh-TW')}</span>
+                        </div>
+                    </div>
+                `).join('');
+                
+                count.textContent = statusTasks.length;
+            });
+            
+            // Save to localStorage
+            localStorage.setItem('kanban-tasks', JSON.stringify(tasks));
+        }
+        
+        // Modal
+        function openModal(status, taskId = null) {
+            currentStatus = status;
+            editingTaskId = taskId;
+            const modal = document.getElementById('task-modal');
+            const title = document.querySelector('.modal-title');
+            
+            if (taskId) {
+                const task = tasks.find(t => t.id === taskId);
+                document.getElementById('task-title').value = task.title;
+                document.getElementById('task-priority').value = task.priority;
+                title.textContent = '編輯任務';
+            } else {
+                document.getElementById('task-title').value = '';
+                document.getElementById('task-priority').value = 'low';
+                title.textContent = '新增任務';
+            }
+            
+            modal.classList.add('active');
+        }
+        
+        function closeModal() {
+            document.getElementById('task-modal').classList.remove('active');
+            editingTaskId = null;
+        }
+        
+        function saveTask() {
+            const title = document.getElementById('task-title').value.trim();
+            const priority = document.getElementById('task-priority').value;
+            
+            if (!title) {
+                alert('請輸入任務名稱');
+                return;
+            }
+            
+            if (editingTaskId) {
+                const task = tasks.find(t => t.id === editingTaskId);
+                task.title = title;
+                task.priority = priority;
+            } else {
+                tasks.push({
+                    id: Date.now(),
+                    title,
+                    priority,
+                    status: currentStatus,
+                    created: new Date().toISOString()
+                });
+            }
+            
+            render();
+            closeModal();
+        }
+        
+        function deleteTask(id) {
+            if (confirm('確定要刪除這個任務嗎？')) {
+                tasks = tasks.filter(t => t.id !== id);
+                render();
+            }
+        }
+        
+        function editTask(id) {
+            const task = tasks.find(t => t.id === id);
+            openModal(task.status, id);
+        }
+        
+        // Drag & Drop
+        function dragStart(e) {
+            draggedTask = e.target;
+            e.target.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        }
+        
+        function dragEnd(e) {
+            e.target.classList.remove('dragging');
+            draggedTask = null;
+        }
+        
+        // Setup drop zones
+        document.querySelectorAll('.task-list').forEach(list => {
+            list.addEventListener('dragover', e => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+            });
+            
+            list.addEventListener('drop', e => {
+                e.preventDefault();
+                if (draggedTask) {
+                    const newStatus = list.id.replace('-list', '');
+                    const taskId = parseInt(draggedTask.dataset.id);
+                    const task = tasks.find(t => t.id === taskId);
+                    if (task && task.status !== newStatus) {
+                        task.status = newStatus;
+                        render();
+                    }
+                }
+            });
+        });
+        
+        // Close modal on outside click
+        document.getElementById('task-modal').addEventListener('click', e => {
+            if (e.target.id === 'task-modal') closeModal();
+        });
+        
+        // Initial render
+        render();
+    </script>
+</body>
+</html>
