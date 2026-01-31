@@ -7,7 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.0.0] - 2026-01-31
+## [2.0.0] - 2026-01-31
+
+### Added
+- **Firebase Authentication** - Google sign-in for family sharing
+- **Cloud Firestore Database** - Real-time data sync across devices
+- **Multi-device Sync** - All family members see same data in real-time
+
+### Changed
+- Data storage moved from localStorage to Firebase Cloud
 
 ### Added
 - **Theme Support** - Light/Dark mode toggle

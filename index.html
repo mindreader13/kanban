@@ -72,6 +72,29 @@
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 16px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--accent-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
         }
         
         .btn {
@@ -95,6 +118,11 @@
             background: var(--bg-secondary);
             color: var(--text-primary);
             border: 1px solid var(--border-color);
+        }
+        
+        .btn-danger {
+            background: #ff6b6b;
+            color: white;
         }
         
         .btn:hover {
@@ -394,6 +422,8 @@
             flex: 1;
             min-width: 80px;
             padding: 4px;
+            background: transparent;
+            color: var(--text-primary);
         }
         
         .tag-item {
@@ -412,6 +442,7 @@
             cursor: pointer;
             font-size: 0.9rem;
             opacity: 0.7;
+            color: white;
         }
         
         .tag-item button:hover {
@@ -524,6 +555,49 @@
             max-width: 280px;
         }
         
+        /* Loading spinner */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+            color: var(--text-muted);
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Login screen */
+        .login-screen {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .login-screen h1 {
+            margin-bottom: 30px;
+        }
+        
+        .login-screen .btn {
+            padding: 15px 30px;
+            font-size: 1.1rem;
+        }
+        
         /* Responsive */
         @media (max-width: 768px) {
             .board {
@@ -543,60 +617,85 @@
     </style>
 </head>
 <body>
-    <div class="header">
+    <!-- Login Screen -->
+    <div id="login-screen" class="login-screen" style="display: none;">
         <h1>📋 專案看板 - Project Kanban</h1>
-        <div class="header-actions">
-            <button class="btn btn-secondary" onclick="toggleTheme()">🌙 Theme</button>
-            <button class="btn btn-secondary" onclick="openBoardModal()">📁 New Board</button>
-            <button class="btn btn-secondary" onclick="openArchiveModal()">📦 Archive</button>
-        </div>
+        <p style="margin-bottom: 30px; color: var(--text-secondary);">請登入以存取你的看板</p>
+        <button class="btn btn-primary" onclick="signInWithGoogle()">
+            🔐 使用 Google 帳戶登入
+        </button>
     </div>
     
-    <div class="board-selector">
-        <label>Board:</label>
-        <select id="board-selector" onchange="switchBoard(this.value)">
-            <option value="default">Default Board</option>
-        </select>
-    </div>
-    
-    <div class="board">
-        <!-- To Do -->
-        <div class="column todo" data-status="todo">
-            <div class="column-header">
-                <span class="column-title">📝 待處理</span>
-                <span class="task-count">0</span>
+    <!-- Main App -->
+    <div id="main-app" style="display: none;">
+        <div class="header">
+            <h1>📋 專案看板 - Project Kanban</h1>
+            <div class="header-actions">
+                <div class="user-info">
+                    <div class="user-avatar" id="user-avatar">?</div>
+                    <span id="user-name">User</span>
+                </div>
+                <button class="btn btn-secondary" onclick="toggleTheme()">🌙 Theme</button>
+                <button class="btn btn-secondary" onclick="openBoardModal()">📁 New Board</button>
+                <button class="btn btn-secondary" onclick="openArchiveModal()">📦 Archive</button>
+                <button class="btn btn-danger" onclick="signOut()">登出</button>
             </div>
-            <div class="task-list" id="todo-list"></div>
-            <button class="add-task" onclick="openModal('todo')">+ 新增任務</button>
         </div>
         
-        <!-- In Progress -->
-        <div class="column inprogress" data-status="inprogress">
-            <div class="column-header">
-                <span class="column-title">🔥 進行中</span>
-                <span class="task-count">0</span>
-            </div>
-            <div class="task-list" id="inprogress-list"></div>
-            <button class="add-task" onclick="openModal('inprogress')">+ 新增任務</button>
+        <div class="board-selector">
+            <label>Board:</label>
+            <select id="board-selector" onchange="switchBoard(this.value)">
+                <option value="default">Default Board</option>
+            </select>
         </div>
         
-        <!-- Done -->
-        <div class="column done" data-status="done">
-            <div class="column-header">
-                <span class="column-title">✅ 已完成</span>
-                <span class="task-count">0</span>
+        <div class="board">
+            <!-- To Do -->
+            <div class="column todo" data-status="todo">
+                <div class="column-header">
+                    <span class="column-title">📝 待處理</span>
+                    <span class="task-count">0</span>
+                </div>
+                <div class="task-list" id="todo-list">
+                    <div class="loading"><div class="spinner"></div>載入中...</div>
+                </div>
+                <button class="add-task" onclick="openModal('todo')">+ 新增任務</button>
             </div>
-            <div class="task-list" id="done-list"></div>
-            <button class="add-task" onclick="openModal('done')">+ 新增任務</button>
-        </div>
-        
-        <!-- Archive -->
-        <div class="column archive archive-column" data-status="archive">
-            <div class="column-header">
-                <span class="column-title">📦 封存</span>
-                <span class="task-count">0</span>
+            
+            <!-- In Progress -->
+            <div class="column inprogress" data-status="inprogress">
+                <div class="column-header">
+                    <span class="column-title">🔥 進行中</span>
+                    <span class="task-count">0</span>
+                </div>
+                <div class="task-list" id="inprogress-list">
+                    <div class="loading"><div class="spinner"></div>載入中...</div>
+                </div>
+                <button class="add-task" onclick="openModal('inprogress')">+ 新增任務</button>
             </div>
-            <div class="task-list" id="archive-list"></div>
+            
+            <!-- Done -->
+            <div class="column done" data-status="done">
+                <div class="column-header">
+                    <span class="column-title">✅ 已完成</span>
+                    <span class="task-count">0</span>
+                </div>
+                <div class="task-list" id="done-list">
+                    <div class="loading"><div class="spinner"></div>載入中...</div>
+                </div>
+                <button class="add-task" onclick="openModal('done')">+ 新增任務</button>
+            </div>
+            
+            <!-- Archive -->
+            <div class="column archive archive-column" data-status="archive">
+                <div class="column-header">
+                    <span class="column-title">📦 封存</span>
+                    <span class="task-count">0</span>
+                </div>
+                <div class="task-list" id="archive-list">
+                    <div class="loading"><div class="spinner"></div>載入中...</div>
+                </div>
+            </div>
         </div>
     </div>
     
@@ -666,19 +765,40 @@
         </div>
     </div>
     
-    <script>
-        // Data
-        let boards = JSON.parse(localStorage.getItem('kanban-boards')) || { 'default': { name: 'Default Board' } };
-        let currentBoard = 'default';
-        let tasks = JSON.parse(localStorage.getItem('kanban-tasks')) || [];
-        let currentStatus = 'todo';
-        let editingTaskId = null;
-        let currentTags = [];
-        let draggedTask = null;
-        let editingTask = null;
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, getDocs, updateDoc, deleteDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDz-q39YiAtniSIKpJlZBjE-NaMm07vEtg",
+            authDomain: "kanban-family.firebaseapp.com",
+            projectId: "kanban-family",
+            storageBucket: "kanban-family.firebasestorage.app",
+            messagingSenderId: "96900774326",
+            appId: "1:96900774326:web:7c9d379c64b8d061d1e917"
+        };
+        
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const provider = new GoogleAuthProvider();
+        
+        // Global variables
+        window.currentUser = null;
+        window.currentBoard = 'default';
+        window.tasks = [];
+        window.boards = {};
+        window.currentTags = [];
+        window.editingTaskId = null;
+        window.draggedTask = null;
+        window.editingTask = null;
         
         // Theme
-        function toggleTheme() {
+        window.toggleTheme = function() {
             const body = document.body;
             if (body.getAttribute('data-theme') === 'dark') {
                 body.removeAttribute('data-theme');
@@ -687,78 +807,185 @@
                 body.setAttribute('data-theme', 'dark');
                 localStorage.setItem('kanban-theme', 'dark');
             }
-        }
+        };
         
         // Load theme
         if (localStorage.getItem('kanban-theme') === 'dark') {
             document.body.setAttribute('data-theme', 'dark');
         }
         
-        // Board functions
-        function openBoardModal() {
-            document.getElementById('board-modal').classList.add('active');
+        // Auth functions
+        window.signInWithGoogle = async function() {
+            try {
+                await signInWithPopup(auth, provider);
+            } catch (error) {
+                console.error('Login error:', error);
+                alert('登入失敗: ' + error.message);
+            }
+        };
+        
+        window.signOut = async function() {
+            try {
+                await signOut(auth);
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+        };
+        
+        // Auth state listener
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                window.currentUser = user;
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('main-app').style.display = 'block';
+                document.getElementById('user-name').textContent = user.displayName || 'User';
+                document.getElementById('user-avatar').textContent = (user.displayName || 'U')[0].toUpperCase();
+                
+                await loadData();
+            } else {
+                window.currentUser = null;
+                document.getElementById('login-screen').style.display = 'flex';
+                document.getElementById('main-app').style.display = 'none';
+            }
+        });
+        
+        // Load data from Firestore
+        async function loadData() {
+            if (!window.currentUser) return;
+            
+            const userId = window.currentUser.uid;
+            
+            // Load boards
+            try {
+                const boardsSnap = await getDocs(collection(db, 'users', userId, 'boards'));
+                window.boards = { 'default': { name: 'Default Board' } };
+                boardsSnap.forEach(doc => {
+                    window.boards[doc.id] = doc.data();
+                });
+                updateBoardSelector();
+            } catch (error) {
+                console.error('Error loading boards:', error);
+            }
+            
+            // Load tasks (real-time)
+            const tasksQuery = query(collection(db, 'users', userId, 'tasks'), orderBy('created', 'desc'));
+            onSnapshot(tasksQuery, (snapshot) => {
+                window.tasks = [];
+                snapshot.forEach(doc => {
+                    window.tasks.push({ id: doc.id, ...doc.data() });
+                });
+                render();
+            });
         }
         
-        function closeBoardModal() {
+        // Save task to Firestore
+        async function saveTaskToFirestore(task) {
+            if (!window.currentUser) return;
+            const userId = window.currentUser.uid;
+            
+            if (task.id) {
+                await setDoc(doc(db, 'users', userId, 'tasks', task.id), {
+                    title: task.title,
+                    description: task.description || '',
+                    due: task.due || '',
+                    tags: task.tags || [],
+                    subtasks: task.subtasks || [],
+                    status: task.status,
+                    board: task.board,
+                    created: task.created || new Date().toISOString()
+                });
+            } else {
+                const newDoc = doc(collection(db, 'users', userId, 'tasks'));
+                await setDoc(newDoc, {
+                    title: task.title,
+                    description: task.description || '',
+                    due: task.due || '',
+                    tags: task.tags || [],
+                    subtasks: task.subtasks || [],
+                    status: task.status,
+                    board: task.board,
+                    created: new Date().toISOString()
+                });
+            }
+        }
+        
+        // Delete task from Firestore
+        async function deleteTaskFromFirestore(taskId) {
+            if (!window.currentUser) return;
+            const userId = window.currentUser.uid;
+            await deleteDoc(doc(db, 'users', userId, 'tasks', taskId));
+        }
+        
+        // Board functions
+        window.openBoardModal = function() {
+            document.getElementById('board-modal').classList.add('active');
+        };
+        
+        window.closeBoardModal = function() {
             document.getElementById('board-modal').classList.remove('active');
             document.getElementById('board-name').value = '';
-        }
+        };
         
-        function createBoard() {
+        window.createBoard = async function() {
             const name = document.getElementById('board-name').value.trim();
             if (!name) {
                 alert('請輸入看板名稱');
                 return;
             }
             const id = 'board_' + Date.now();
-            boards[id] = { name: name };
-            localStorage.setItem('kanban-boards', JSON.stringify(boards));
+            window.boards[id] = { name: name };
             updateBoardSelector();
-            switchBoard(id);
+            
+            // Save to Firestore
+            if (window.currentUser) {
+                await setDoc(doc(db, 'users', window.currentUser.uid, 'boards', id), { name: name });
+            }
+            
             closeBoardModal();
-        }
+            switchBoard(id);
+        };
         
         function updateBoardSelector() {
             const selector = document.getElementById('board-selector');
-            selector.innerHTML = Object.entries(boards).map(([id, board]) => 
-                `<option value="${id}" ${id === currentBoard ? 'selected' : ''}>${board.name}</option>`
+            selector.innerHTML = Object.entries(window.boards).map(([id, board]) => 
+                `<option value="${id}" ${id === window.currentBoard ? 'selected' : ''}>${board.name}</option>`
             ).join('');
         }
         
-        function switchBoard(boardId) {
-            currentBoard = boardId;
+        window.switchBoard = function(boardId) {
+            window.currentBoard = boardId;
             render();
-        }
+        };
         
         // Archive functions
-        function openArchiveModal() {
-            const archivedTasks = tasks.filter(t => t.status === 'archive');
+        window.openArchiveModal = function() {
+            const archivedTasks = window.tasks.filter(t => t.status === 'archive' && t.board === window.currentBoard);
             const container = document.getElementById('archive-list-modal');
             container.innerHTML = archivedTasks.length ? archivedTasks.map(task => `
                 <div class="task" style="margin-bottom: 10px;">
                     <div class="task-title">${task.title}</div>
                     <div class="task-meta">
                         <span>${new Date(task.created).toLocaleDateString('zh-TW')}</span>
-                        <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.8rem;" onclick="unarchiveTask(${task.id})">復原</button>
-                        <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.8rem; color: #ff6b6b;" onclick="deleteTask(${task.id})">刪除</button>
+                        <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.8rem;" onclick="unarchiveTask('${task.id}')">復原</button>
+                        <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.8rem; color: #ff6b6b;" onclick="deleteTask('${task.id}')">刪除</button>
                     </div>
                 </div>
             `).join('') : '<p style="color: var(--text-muted); text-align: center;">沒有封存任務</p>';
             document.getElementById('archive-modal').classList.add('active');
-        }
+        };
         
-        function closeArchiveModal() {
+        window.closeArchiveModal = function() {
             document.getElementById('archive-modal').classList.remove('active');
-        }
+        };
         
-        function unarchiveTask(id) {
-            const task = tasks.find(t => t.id === id);
+        window.unarchiveTask = async function(id) {
+            const task = window.tasks.find(t => t.id === id);
             if (task) {
                 task.status = 'todo';
-                render();
+                await saveTaskToFirestore(task);
                 openArchiveModal();
             }
-        }
+        };
         
         // Render
         function render() {
@@ -767,7 +994,7 @@
             columns.forEach(status => {
                 const list = document.getElementById(`${status}-list`);
                 const count = document.querySelector(`.${status} .task-count`);
-                const boardTasks = tasks.filter(t => t.board === currentBoard && t.status === status);
+                const boardTasks = window.tasks.filter(t => t.board === window.currentBoard && t.status === status);
                 
                 list.innerHTML = boardTasks.map(task => {
                     const dueClass = getDueClass(task.due);
@@ -775,7 +1002,7 @@
                         <div class="task-subtasks">
                             ${task.subtasks.map((st, i) => `
                                 <div class="subtask ${st.completed ? 'completed' : ''}">
-                                    <input type="checkbox" ${st.completed ? 'checked' : ''} onchange="toggleSubtask(${task.id}, ${i})">
+                                    <input type="checkbox" ${st.completed ? 'checked' : ''} onchange="toggleSubtask('${task.id}', ${i})">
                                     <span>${st.text}</span>
                                 </div>
                             `).join('')}
@@ -793,9 +1020,9 @@
                     return `
                         <div class="task" draggable="true" data-id="${task.id}" ondragstart="dragStart(event)" ondragend="dragEnd(event)">
                             <div class="task-actions">
-                                <button class="task-btn" onclick="editTask(${task.id})">✏️</button>
-                                <button class="task-btn" onclick="archiveTask(${task.id})">📦</button>
-                                <button class="task-btn delete" onclick="deleteTask(${task.id})">🗑️</button>
+                                <button class="task-btn" onclick="editTask('${task.id}')">✏️</button>
+                                <button class="task-btn" onclick="archiveTask('${task.id}')">📦</button>
+                                <button class="task-btn delete" onclick="deleteTask('${task.id}')">🗑️</button>
                             </div>
                             <div class="task-title">${task.title}</div>
                             ${task.description ? `<div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px;">${task.description}</div>` : ''}
@@ -810,8 +1037,6 @@
                 
                 count.textContent = boardTasks.length;
             });
-            
-            localStorage.setItem('kanban-tasks', JSON.stringify(tasks));
         }
         
         function getDueClass(due) {
@@ -831,14 +1056,13 @@
         }
         
         // Modal functions
-        function openModal(status, taskId = null) {
-            currentStatus = status;
-            editingTaskId = taskId;
-            currentTags = [];
+        window.openModal = function(status, taskId = null) {
+            window.currentStatus = status;
+            window.editingTaskId = taskId;
+            window.currentTags = [];
             const modal = document.getElementById('task-modal');
             const title = document.querySelector('#task-modal .modal-title');
             
-            // Reset form
             document.getElementById('task-title').value = '';
             document.getElementById('task-desc').value = '';
             document.getElementById('task-due').value = '';
@@ -854,14 +1078,14 @@
             `;
             
             if (taskId) {
-                editingTask = tasks.find(t => t.id === taskId);
-                document.getElementById('task-title').value = editingTask.title;
-                document.getElementById('task-desc').value = editingTask.description || '';
-                document.getElementById('task-due').value = editingTask.due || '';
-                currentTags = editingTask.tags || [];
+                window.editingTask = window.tasks.find(t => t.id === taskId);
+                document.getElementById('task-title').value = window.editingTask.title;
+                document.getElementById('task-desc').value = window.editingTask.description || '';
+                document.getElementById('task-due').value = window.editingTask.due || '';
+                window.currentTags = window.editingTask.tags || [];
                 updateTagsDisplay();
-                if (editingTask.subtasks) {
-                    document.getElementById('subtasks-container').innerHTML = editingTask.subtasks.map((st, i) => `
+                if (window.editingTask.subtasks) {
+                    document.getElementById('subtasks-container').innerHTML = window.editingTask.subtasks.map((st, i) => `
                         <div class="subtask-item">
                             <input type="checkbox" ${st.completed ? 'checked' : ''} onchange="updateSubtaskStatus(this)">
                             <input type="text" value="${st.text}" onkeypress="handleSubtaskInput(event, this)">
@@ -877,38 +1101,38 @@
                 }
                 title.textContent = '編輯任務';
             } else {
-                editingTask = null;
+                window.editingTask = null;
                 title.textContent = '新增任務';
             }
             
             modal.classList.add('active');
-        }
+        };
         
-        function closeModal() {
+        window.closeModal = function() {
             document.getElementById('task-modal').classList.remove('active');
-            editingTaskId = null;
-            editingTask = null;
-        }
+            window.editingTaskId = null;
+            window.editingTask = null;
+        };
         
         // Tags functions
-        function handleTagInput(e) {
+        window.handleTagInput = function(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
                 const input = document.getElementById('tag-input');
                 const text = input.value.trim();
-                if (text && !currentTags.find(t => t.text === text)) {
+                if (text && !window.currentTags.find(t => t.text === text)) {
                     const types = ['work', 'personal', 'urgent', 'other'];
-                    const type = types[currentTags.length % types.length];
-                    currentTags.push({ text, type });
+                    const type = types[window.currentTags.length % types.length];
+                    window.currentTags.push({ text, type });
                     updateTagsDisplay();
                     input.value = '';
                 }
             }
-        }
+        };
         
         function updateTagsDisplay() {
             const container = document.getElementById('tags-container');
-            container.innerHTML = currentTags.map(tag => `
+            container.innerHTML = window.currentTags.map(tag => `
                 <span class="tag-item tag-${tag.type}" style="background: var(--tag-${tag.type});">
                     ${tag.text}
                     <button onclick="removeTag('${tag.text}')">×</button>
@@ -918,13 +1142,13 @@
             `;
         }
         
-        function removeTag(text) {
-            currentTags = currentTags.filter(t => t.text !== text);
+        window.removeTag = function(text) {
+            window.currentTags = window.currentTags.filter(t => t.text !== text);
             updateTagsDisplay();
-        }
+        };
         
         // Subtasks functions
-        function addSubtaskInput() {
+        window.addSubtaskInput = function() {
             const container = document.getElementById('subtasks-container');
             container.innerHTML += `
                 <div class="subtask-item">
@@ -933,25 +1157,23 @@
                     <button class="task-btn" onclick="removeSubtask(this)">✕</button>
                 </div>
             `;
-        }
+        };
         
-        function handleSubtaskInput(e, input) {
+        window.handleSubtaskInput = function(e, input) {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                addSubtaskInput();
+                window.addSubtaskInput();
             }
-        }
+        };
         
-        function removeSubtask(btn) {
+        window.removeSubtask = function(btn) {
             const container = document.getElementById('subtasks-container');
             if (container.children.length > 1) {
                 btn.parentElement.remove();
             }
-        }
+        };
         
-        function updateSubtaskStatus(checkbox) {
-            // Just for visual feedback
-        }
+        window.updateSubtaskStatus = function(checkbox) {};
         
         function getSubtasks() {
             const items = document.querySelectorAll('#subtasks-container .subtask-item');
@@ -961,16 +1183,8 @@
             })).filter(st => st.text.trim());
         }
         
-        function toggleSubtask(taskId, subtaskIndex) {
-            const task = tasks.find(t => t.id === taskId);
-            if (task && task.subtasks[subtaskIndex]) {
-                task.subtasks[subtaskIndex].completed = !task.subtasks[subtaskIndex].completed;
-                render();
-            }
-        }
-        
         // Save task
-        function saveTask() {
+        window.saveTask = async function() {
             const title = document.getElementById('task-title').value.trim();
             if (!title) {
                 alert('請輸入任務名稱');
@@ -981,63 +1195,63 @@
             const due = document.getElementById('task-due').value;
             const subtasks = getSubtasks();
             
-            if (editingTaskId) {
-                const task = tasks.find(t => t.id === editingTaskId);
-                if (task) {
-                    task.title = title;
-                    task.description = description;
-                    task.due = due;
-                    task.tags = currentTags;
-                    task.subtasks = subtasks;
-                }
-            } else {
-                tasks.push({
-                    id: Date.now(),
-                    title,
-                    description,
-                    due,
-                    tags: currentTags,
-                    subtasks,
-                    status: currentStatus,
-                    board: currentBoard,
-                    created: new Date().toISOString()
-                });
-            }
+            const task = {
+                id: window.editingTaskId,
+                title,
+                description,
+                due,
+                tags: window.currentTags,
+                subtasks,
+                status: window.currentStatus,
+                board: window.currentBoard,
+                created: window.editingTask?.created || new Date().toISOString()
+            };
             
-            render();
-            closeModal();
-        }
+            await saveTaskToFirestore(task);
+            window.closeModal();
+        };
         
-        function deleteTask(id) {
+        // Delete task
+        window.deleteTask = async function(id) {
             if (confirm('確定要刪除這個任務嗎？')) {
-                tasks = tasks.filter(t => t.id !== id);
-                render();
+                await deleteTaskFromFirestore(id);
             }
-        }
+        };
         
-        function archiveTask(id) {
-            const task = tasks.find(t => t.id === id);
+        // Archive task
+        window.archiveTask = async function(id) {
+            const task = window.tasks.find(t => t.id === id);
             if (task) {
                 task.status = 'archive';
-                render();
+                await saveTaskToFirestore(task);
             }
-        }
+        };
         
-        function editTask(id) {
-            openModal(tasks.find(t => t.id === id).status, id);
-        }
+        // Edit task
+        window.editTask = function(id) {
+            window.openModal(window.tasks.find(t => t.id === id).status, id);
+        };
+        
+        // Toggle subtask
+        window.toggleSubtask = async function(taskId, subtaskIndex) {
+            const task = window.tasks.find(t => t.id === taskId);
+            if (task && task.subtasks[subtaskIndex]) {
+                task.subtasks[subtaskIndex].completed = !task.subtasks[subtaskIndex].completed;
+                await saveTaskToFirestore(task);
+            }
+        };
         
         // Drag & Drop
-        function dragStart(e) {
-            draggedTask = e.target;
+        window.dragStart = function(e) {
+            window.draggedTask = e.target;
             e.target.classList.add('dragging');
             e.dataTransfer.effectAllowed = 'move';
-        }
+        };
         
-        function dragEnd(e) {
+        window.dragEnd = function(e) {
             e.target.classList.remove('dragging');
-            draggedTask = null;
-        }
+            window.draggedTask = null;
+        };
         
         // Setup drop zones
         document.querySelectorAll('.task-list').forEach(list => {
@@ -1046,15 +1260,15 @@
                 e.dataTransfer.dropEffect = 'move';
             });
             
-            list.addEventListener('drop', e => {
+            list.addEventListener('drop', async e => {
                 e.preventDefault();
-                if (draggedTask) {
+                if (window.draggedTask) {
                     const newStatus = list.id.replace('-list', '');
-                    const taskId = parseInt(draggedTask.dataset.id);
-                    const task = tasks.find(t => t.id === taskId);
+                    const taskId = window.draggedTask.dataset.id;
+                    const task = window.tasks.find(t => t.id === taskId);
                     if (task && task.status !== newStatus) {
                         task.status = newStatus;
-                        render();
+                        await saveTaskToFirestore(task);
                     }
                 }
             });
@@ -1069,9 +1283,9 @@
             });
         });
         
-        // Initialize
-        updateBoardSelector();
-        render();
+        // Make functions available globally
+        window.signInWithGoogle = signInWithGoogle;
+        window.signOut = signOut;
     </script>
 </body>
 </html>
