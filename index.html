@@ -5,6 +5,37 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>專案看板 - Project Kanban</title>
     <style>
+        :root {
+            --bg-primary: #f5f7fa;
+            --bg-secondary: #ffffff;
+            --bg-column: rgba(255, 255, 255, 0.95);
+            --text-primary: #333;
+            --text-secondary: #666;
+            --text-muted: #999;
+            --border-color: #eee;
+            --accent: #667eea;
+            --accent-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --shadow: 0 10px 40px rgba(0,0,0,0.1);
+            --shadow-hover: 0 15px 50px rgba(0,0,0,0.15);
+            --radius: 12px;
+            --tag-work: #4facfe;
+            --tag-personal: #43e97b;
+            --tag-urgent: #ff6b6b;
+            --tag-other: #a855f7;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #16213e;
+            --bg-column: rgba(22, 33, 62, 0.95);
+            --text-primary: #eee;
+            --text-secondary: #aaa;
+            --text-muted: #666;
+            --border-color: #333;
+            --shadow: 0 10px 40px rgba(0,0,0,0.3);
+            --shadow-hover: 0 15px 50px rgba(0,0,0,0.4);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -13,34 +44,82 @@
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--bg-primary);
             min-height: 100vh;
             padding: 20px;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto 30px;
+            flex-wrap: wrap;
+            gap: 15px;
         }
         
         h1 {
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: var(--accent-gradient);
             color: white;
-            text-align: center;
-            margin-bottom: 30px;
-            font-size: 2rem;
+        }
+        
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            opacity: 0.9;
         }
         
         .board {
             display: flex;
             gap: 20px;
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             overflow-x: auto;
             padding-bottom: 20px;
+            align-items: flex-start;
         }
         
         .column {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 12px;
-            min-width: 300px;
-            max-width: 300px;
+            background: var(--bg-column);
+            border-radius: var(--radius);
+            min-width: 320px;
+            max-width: 320px;
             padding: 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            box-shadow: var(--shadow);
+            transition: all 0.3s;
         }
         
         .column-header {
@@ -49,26 +128,29 @@
             align-items: center;
             margin-bottom: 15px;
             padding-bottom: 10px;
-            border-bottom: 2px solid #eee;
+            border-bottom: 2px solid var(--border-color);
         }
         
         .column-title {
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: 600;
-            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         
         .task-count {
-            background: #667eea;
+            background: var(--accent);
             color: white;
             padding: 2px 10px;
             border-radius: 20px;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
         }
         
         .todo .task-count { background: #f093fb; }
         .inprogress .task-count { background: #4facfe; }
         .done .task-count { background: #43e97b; }
+        .archive .task-count { background: #666; }
         
         .task-list {
             min-height: 200px;
@@ -78,9 +160,9 @@
         }
         
         .task {
-            background: white;
-            border: 1px solid #eee;
-            border-radius: 8px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
             padding: 12px;
             cursor: grab;
             transition: all 0.2s;
@@ -88,7 +170,7 @@
         }
         
         .task:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            box-shadow: var(--shadow-hover);
             transform: translateY(-2px);
         }
         
@@ -99,34 +181,90 @@
         
         .task-title {
             font-size: 0.95rem;
-            color: #333;
             margin-bottom: 8px;
+            word-break: break-word;
         }
         
         .task-meta {
             display: flex;
-            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 6px;
             align-items: center;
-            font-size: 0.8rem;
-            color: #999;
+            font-size: 0.75rem;
+            color: var(--text-muted);
         }
         
-        .task-priority {
+        .task-tags {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+        
+        .tag {
             padding: 2px 8px;
             border-radius: 4px;
             font-size: 0.7rem;
+            color: white;
         }
         
-        .priority-high { background: #ff6b6b; color: white; }
-        .priority-medium { background: #ffd93d; color: #333; }
-        .priority-low { background: #6bcb77; color: white; }
+        .tag-work { background: var(--tag-work); }
+        .tag-personal { background: var(--tag-personal); }
+        .tag-urgent { background: var(--tag-urgent); }
+        .tag-other { background: var(--tag-other); }
+        
+        .task-due {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: rgba(255, 107, 107, 0.1);
+            color: #ff6b6b;
+        }
+        
+        .task-due.overdue {
+            background: rgba(255, 107, 107, 0.2);
+            color: #ff6b6b;
+            font-weight: 600;
+        }
+        
+        .task-due.soon {
+            background: rgba(255, 193, 7, 0.1);
+            color: #ffc107;
+        }
+        
+        .task-subtasks {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px dashed var(--border-color);
+            font-size: 0.8rem;
+        }
+        
+        .subtask {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 0;
+            color: var(--text-secondary);
+        }
+        
+        .subtask input[type="checkbox"] {
+            width: 14px;
+            height: 14px;
+            cursor: pointer;
+        }
+        
+        .subtask.completed {
+            text-decoration: line-through;
+            opacity: 0.5;
+        }
         
         .task-actions {
             position: absolute;
             top: 8px;
             right: 8px;
             display: none;
-            gap: 5px;
+            gap: 4px;
         }
         
         .task:hover .task-actions {
@@ -137,38 +275,40 @@
             background: none;
             border: none;
             cursor: pointer;
-            font-size: 0.9rem;
-            padding: 2px 6px;
+            font-size: 0.85rem;
+            padding: 4px 6px;
             border-radius: 4px;
-            transition: background 0.2s;
+            transition: all 0.2s;
+            opacity: 0.6;
         }
         
         .task-btn:hover {
-            background: #eee;
+            opacity: 1;
+            background: var(--border-color);
         }
         
         .task-btn.delete:hover {
-            background: #ff6b6b;
-            color: white;
+            background: rgba(255, 107, 107, 0.2);
+            color: #ff6b6b;
         }
         
         .add-task {
             width: 100%;
             padding: 10px;
-            border: 2px dashed #ddd;
+            border: 2px dashed var(--border-color);
             border-radius: 8px;
             background: none;
             cursor: pointer;
-            color: #999;
+            color: var(--text-muted);
             font-size: 0.9rem;
             transition: all 0.2s;
             margin-top: 10px;
         }
         
         .add-task:hover {
-            border-color: #667eea;
-            color: #667eea;
-            background: rgba(102, 126, 234, 0.1);
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(102, 126, 234, 0.05);
         }
         
         .modal {
@@ -182,6 +322,7 @@
             justify-content: center;
             align-items: center;
             z-index: 1000;
+            backdrop-filter: blur(4px);
         }
         
         .modal.active {
@@ -189,17 +330,22 @@
         }
         
         .modal-content {
-            background: white;
-            border-radius: 12px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius);
             padding: 25px;
             width: 90%;
-            max-width: 400px;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
         }
         
         .modal-title {
             font-size: 1.2rem;
             margin-bottom: 20px;
-            color: #333;
+            color: var(--text-primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         
         .form-group {
@@ -208,18 +354,117 @@
         
         .form-group label {
             display: block;
-            margin-bottom: 5px;
-            color: #666;
-            font-size: 0.9rem;
+            margin-bottom: 6px;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            font-weight: 500;
         }
         
         .form-group input,
-        .form-group select {
+        .form-group select,
+        .form-group textarea {
             width: 100%;
             padding: 10px;
-            border: 1px solid #ddd;
+            border: 1px solid var(--border-color);
             border-radius: 6px;
             font-size: 0.95rem;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        .tags-input {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            min-height: 44px;
+            align-items: center;
+        }
+        
+        .tags-input input {
+            border: none;
+            outline: none;
+            flex: 1;
+            min-width: 80px;
+            padding: 4px;
+        }
+        
+        .tag-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            color: white;
+        }
+        
+        .tag-item button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+        
+        .tag-item button:hover {
+            opacity: 1;
+        }
+        
+        .subtasks-list {
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 10px;
+            margin-top: 10px;
+        }
+        
+        .subtask-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .subtask-item:last-child {
+            border-bottom: none;
+        }
+        
+        .subtask-item input[type="text"] {
+            flex: 1;
+            border: none;
+            outline: none;
+            background: transparent;
+            color: var(--text-primary);
+        }
+        
+        .subtask-item input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+        }
+        
+        .add-subtask-btn {
+            background: none;
+            border: 1px dashed var(--border-color);
+            padding: 8px;
+            width: 100%;
+            border-radius: 6px;
+            cursor: pointer;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-top: 8px;
+        }
+        
+        .add-subtask-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
         }
         
         .modal-actions {
@@ -230,28 +475,56 @@
         
         .btn {
             flex: 1;
-            padding: 10px;
+            padding: 12px;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
             font-size: 0.95rem;
+            font-weight: 500;
             transition: all 0.2s;
         }
         
         .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--accent-gradient);
             color: white;
         }
         
         .btn-secondary {
-            background: #eee;
-            color: #333;
+            background: var(--border-color);
+            color: var(--text-primary);
         }
         
         .btn:hover {
+            transform: translateY(-2px);
             opacity: 0.9;
         }
         
+        /* Board selector */
+        .board-selector {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 20px;
+            max-width: 1400px;
+            margin: 0 auto 20px;
+        }
+        
+        .board-selector select {
+            padding: 8px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 0.95rem;
+        }
+        
+        /* Archive column */
+        .archive-column {
+            min-width: 280px;
+            max-width: 280px;
+        }
+        
+        /* Responsive */
         @media (max-width: 768px) {
             .board {
                 flex-direction: column;
@@ -261,11 +534,30 @@
                 max-width: 100%;
                 min-width: 100%;
             }
+            
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
         }
     </style>
 </head>
 <body>
-    <h1>📋 專案看板 - Project Kanban</h1>
+    <div class="header">
+        <h1>📋 專案看板 - Project Kanban</h1>
+        <div class="header-actions">
+            <button class="btn btn-secondary" onclick="toggleTheme()">🌙 Theme</button>
+            <button class="btn btn-secondary" onclick="openBoardModal()">📁 New Board</button>
+            <button class="btn btn-secondary" onclick="openArchiveModal()">📦 Archive</button>
+        </div>
+    </div>
+    
+    <div class="board-selector">
+        <label>Board:</label>
+        <select id="board-selector" onchange="switchBoard(this.value)">
+            <option value="default">Default Board</option>
+        </select>
+    </div>
     
     <div class="board">
         <!-- To Do -->
@@ -297,6 +589,15 @@
             <div class="task-list" id="done-list"></div>
             <button class="add-task" onclick="openModal('done')">+ 新增任務</button>
         </div>
+        
+        <!-- Archive -->
+        <div class="column archive archive-column" data-status="archive">
+            <div class="column-header">
+                <span class="column-title">📦 封存</span>
+                <span class="task-count">0</span>
+            </div>
+            <div class="task-list" id="archive-list"></div>
+        </div>
     </div>
     
     <!-- Task Modal -->
@@ -304,16 +605,33 @@
         <div class="modal-content">
             <h3 class="modal-title">新增任務</h3>
             <div class="form-group">
-                <label>任務名稱</label>
+                <label>任務名稱 *</label>
                 <input type="text" id="task-title" placeholder="輸入任務名稱">
             </div>
             <div class="form-group">
-                <label>優先級</label>
-                <select id="task-priority">
-                    <option value="low">🟢 低</option>
-                    <option value="medium">🟡 中</option>
-                    <option value="high">🔴 高</option>
-                </select>
+                <label>描述</label>
+                <textarea id="task-desc" placeholder="輸入任務描述（可選）"></textarea>
+            </div>
+            <div class="form-group">
+                <label>截止日期</label>
+                <input type="date" id="task-due">
+            </div>
+            <div class="form-group">
+                <label>標籤</label>
+                <div class="tags-input" id="tags-container">
+                    <input type="text" id="tag-input" placeholder="輸入標籤並按 Enter" onkeypress="handleTagInput(event)">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>子任務</label>
+                <div class="subtasks-list" id="subtasks-container">
+                    <div class="subtask-item">
+                        <input type="checkbox" onchange="updateSubtaskStatus(this)">
+                        <input type="text" placeholder="輸入子任務" onkeypress="handleSubtaskInput(event, this)">
+                        <button class="task-btn" onclick="removeSubtask(this)">✕</button>
+                    </div>
+                </div>
+                <button class="add-subtask-btn" onclick="addSubtaskInput()">+ 新增子任務</button>
             </div>
             <div class="modal-actions">
                 <button class="btn btn-secondary" onclick="closeModal()">取消</button>
@@ -322,62 +640,244 @@
         </div>
     </div>
     
+    <!-- Board Modal -->
+    <div class="modal" id="board-modal">
+        <div class="modal-content">
+            <h3 class="modal-title">新增看板</h3>
+            <div class="form-group">
+                <label>看板名稱 *</label>
+                <input type="text" id="board-name" placeholder="輸入看板名稱">
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeBoardModal()">取消</button>
+                <button class="btn btn-primary" onclick="createBoard()">建立</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Archive Modal -->
+    <div class="modal" id="archive-modal">
+        <div class="modal-content">
+            <h3 class="modal-title">封存任務</h3>
+            <div id="archive-list-modal"></div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeArchiveModal()">關閉</button>
+            </div>
+        </div>
+    </div>
+    
     <script>
         // Data
+        let boards = JSON.parse(localStorage.getItem('kanban-boards')) || { 'default': { name: 'Default Board' } };
+        let currentBoard = 'default';
         let tasks = JSON.parse(localStorage.getItem('kanban-tasks')) || [];
         let currentStatus = 'todo';
         let editingTaskId = null;
-        
-        // Drag state
+        let currentTags = [];
         let draggedTask = null;
+        let editingTask = null;
+        
+        // Theme
+        function toggleTheme() {
+            const body = document.body;
+            if (body.getAttribute('data-theme') === 'dark') {
+                body.removeAttribute('data-theme');
+                localStorage.setItem('kanban-theme', 'light');
+            } else {
+                body.setAttribute('data-theme', 'dark');
+                localStorage.setItem('kanban-theme', 'dark');
+            }
+        }
+        
+        // Load theme
+        if (localStorage.getItem('kanban-theme') === 'dark') {
+            document.body.setAttribute('data-theme', 'dark');
+        }
+        
+        // Board functions
+        function openBoardModal() {
+            document.getElementById('board-modal').classList.add('active');
+        }
+        
+        function closeBoardModal() {
+            document.getElementById('board-modal').classList.remove('active');
+            document.getElementById('board-name').value = '';
+        }
+        
+        function createBoard() {
+            const name = document.getElementById('board-name').value.trim();
+            if (!name) {
+                alert('請輸入看板名稱');
+                return;
+            }
+            const id = 'board_' + Date.now();
+            boards[id] = { name: name };
+            localStorage.setItem('kanban-boards', JSON.stringify(boards));
+            updateBoardSelector();
+            switchBoard(id);
+            closeBoardModal();
+        }
+        
+        function updateBoardSelector() {
+            const selector = document.getElementById('board-selector');
+            selector.innerHTML = Object.entries(boards).map(([id, board]) => 
+                `<option value="${id}" ${id === currentBoard ? 'selected' : ''}>${board.name}</option>`
+            ).join('');
+        }
+        
+        function switchBoard(boardId) {
+            currentBoard = boardId;
+            render();
+        }
+        
+        // Archive functions
+        function openArchiveModal() {
+            const archivedTasks = tasks.filter(t => t.status === 'archive');
+            const container = document.getElementById('archive-list-modal');
+            container.innerHTML = archivedTasks.length ? archivedTasks.map(task => `
+                <div class="task" style="margin-bottom: 10px;">
+                    <div class="task-title">${task.title}</div>
+                    <div class="task-meta">
+                        <span>${new Date(task.created).toLocaleDateString('zh-TW')}</span>
+                        <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.8rem;" onclick="unarchiveTask(${task.id})">復原</button>
+                        <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.8rem; color: #ff6b6b;" onclick="deleteTask(${task.id})">刪除</button>
+                    </div>
+                </div>
+            `).join('') : '<p style="color: var(--text-muted); text-align: center;">沒有封存任務</p>';
+            document.getElementById('archive-modal').classList.add('active');
+        }
+        
+        function closeArchiveModal() {
+            document.getElementById('archive-modal').classList.remove('active');
+        }
+        
+        function unarchiveTask(id) {
+            const task = tasks.find(t => t.id === id);
+            if (task) {
+                task.status = 'todo';
+                render();
+                openArchiveModal();
+            }
+        }
         
         // Render
         function render() {
-            const columns = ['todo', 'inprogress', 'done'];
+            const columns = ['todo', 'inprogress', 'done', 'archive'];
             
             columns.forEach(status => {
                 const list = document.getElementById(`${status}-list`);
                 const count = document.querySelector(`.${status} .task-count`);
-                const statusTasks = tasks.filter(t => t.status === status);
+                const boardTasks = tasks.filter(t => t.board === currentBoard && t.status === status);
                 
-                list.innerHTML = statusTasks.map(task => `
-                    <div class="task" draggable="true" data-id="${task.id}" ondragstart="dragStart(event)" ondragend="dragEnd(event)">
-                        <div class="task-actions">
-                            <button class="task-btn" onclick="editTask(${task.id})">✏️</button>
-                            <button class="task-btn delete" onclick="deleteTask(${task.id})">🗑️</button>
+                list.innerHTML = boardTasks.map(task => {
+                    const dueClass = getDueClass(task.due);
+                    const subtasksHtml = task.subtasks && task.subtasks.length ? `
+                        <div class="task-subtasks">
+                            ${task.subtasks.map((st, i) => `
+                                <div class="subtask ${st.completed ? 'completed' : ''}">
+                                    <input type="checkbox" ${st.completed ? 'checked' : ''} onchange="toggleSubtask(${task.id}, ${i})">
+                                    <span>${st.text}</span>
+                                </div>
+                            `).join('')}
                         </div>
-                        <div class="task-title">${task.title}</div>
-                        <div class="task-meta">
-                            <span class="task-priority priority-${task.priority}">
-                                ${task.priority === 'high' ? '🔴 高' : task.priority === 'medium' ? '🟡 中' : '🟢 低'}
-                            </span>
-                            <span>${new Date(task.created).toLocaleDateString('zh-TW')}</span>
+                    ` : '';
+                    
+                    const tagsHtml = task.tags && task.tags.length ? `
+                        <div class="task-tags">
+                            ${task.tags.map(tag => `
+                                <span class="tag tag-${tag.type || 'other'}">${tag.text}</span>
+                            `).join('')}
                         </div>
-                    </div>
-                `).join('');
+                    ` : '';
+                    
+                    return `
+                        <div class="task" draggable="true" data-id="${task.id}" ondragstart="dragStart(event)" ondragend="dragEnd(event)">
+                            <div class="task-actions">
+                                <button class="task-btn" onclick="editTask(${task.id})">✏️</button>
+                                <button class="task-btn" onclick="archiveTask(${task.id})">📦</button>
+                                <button class="task-btn delete" onclick="deleteTask(${task.id})">🗑️</button>
+                            </div>
+                            <div class="task-title">${task.title}</div>
+                            ${task.description ? `<div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px;">${task.description}</div>` : ''}
+                            <div class="task-meta">
+                                ${task.due ? `<span class="task-due ${dueClass}">📅 ${formatDate(task.due)}</span>` : ''}
+                                ${tagsHtml}
+                            </div>
+                            ${subtasksHtml}
+                        </div>
+                    `;
+                }).join('');
                 
-                count.textContent = statusTasks.length;
+                count.textContent = boardTasks.length;
             });
             
-            // Save to localStorage
             localStorage.setItem('kanban-tasks', JSON.stringify(tasks));
         }
         
-        // Modal
+        function getDueClass(due) {
+            if (!due) return '';
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            const dueDate = new Date(due);
+            const diff = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
+            if (diff < 0) return 'overdue';
+            if (diff <= 2) return 'soon';
+            return '';
+        }
+        
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return `${date.getMonth() + 1}/${date.getDate()}`;
+        }
+        
+        // Modal functions
         function openModal(status, taskId = null) {
             currentStatus = status;
             editingTaskId = taskId;
+            currentTags = [];
             const modal = document.getElementById('task-modal');
-            const title = document.querySelector('.modal-title');
+            const title = document.querySelector('#task-modal .modal-title');
+            
+            // Reset form
+            document.getElementById('task-title').value = '';
+            document.getElementById('task-desc').value = '';
+            document.getElementById('task-due').value = '';
+            document.getElementById('tags-container').innerHTML = `
+                <input type="text" id="tag-input" placeholder="輸入標籤並按 Enter" onkeypress="handleTagInput(event)">
+            `;
+            document.getElementById('subtasks-container').innerHTML = `
+                <div class="subtask-item">
+                    <input type="checkbox" onchange="updateSubtaskStatus(this)">
+                    <input type="text" placeholder="輸入子任務" onkeypress="handleSubtaskInput(event, this)">
+                    <button class="task-btn" onclick="removeSubtask(this)">✕</button>
+                </div>
+            `;
             
             if (taskId) {
-                const task = tasks.find(t => t.id === taskId);
-                document.getElementById('task-title').value = task.title;
-                document.getElementById('task-priority').value = task.priority;
+                editingTask = tasks.find(t => t.id === taskId);
+                document.getElementById('task-title').value = editingTask.title;
+                document.getElementById('task-desc').value = editingTask.description || '';
+                document.getElementById('task-due').value = editingTask.due || '';
+                currentTags = editingTask.tags || [];
+                updateTagsDisplay();
+                if (editingTask.subtasks) {
+                    document.getElementById('subtasks-container').innerHTML = editingTask.subtasks.map((st, i) => `
+                        <div class="subtask-item">
+                            <input type="checkbox" ${st.completed ? 'checked' : ''} onchange="updateSubtaskStatus(this)">
+                            <input type="text" value="${st.text}" onkeypress="handleSubtaskInput(event, this)">
+                            <button class="task-btn" onclick="removeSubtask(this)">✕</button>
+                        </div>
+                    `).join('') + `
+                        <div class="subtask-item">
+                            <input type="checkbox" onchange="updateSubtaskStatus(this)">
+                            <input type="text" placeholder="輸入子任務" onkeypress="handleSubtaskInput(event, this)">
+                            <button class="task-btn" onclick="removeSubtask(this)">✕</button>
+                        </div>
+                    `;
+                }
                 title.textContent = '編輯任務';
             } else {
-                document.getElementById('task-title').value = '';
-                document.getElementById('task-priority').value = 'low';
+                editingTask = null;
                 title.textContent = '新增任務';
             }
             
@@ -387,27 +887,119 @@
         function closeModal() {
             document.getElementById('task-modal').classList.remove('active');
             editingTaskId = null;
+            editingTask = null;
         }
         
+        // Tags functions
+        function handleTagInput(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const input = document.getElementById('tag-input');
+                const text = input.value.trim();
+                if (text && !currentTags.find(t => t.text === text)) {
+                    const types = ['work', 'personal', 'urgent', 'other'];
+                    const type = types[currentTags.length % types.length];
+                    currentTags.push({ text, type });
+                    updateTagsDisplay();
+                    input.value = '';
+                }
+            }
+        }
+        
+        function updateTagsDisplay() {
+            const container = document.getElementById('tags-container');
+            container.innerHTML = currentTags.map(tag => `
+                <span class="tag-item tag-${tag.type}" style="background: var(--tag-${tag.type});">
+                    ${tag.text}
+                    <button onclick="removeTag('${tag.text}')">×</button>
+                </span>
+            `).join('') + `
+                <input type="text" id="tag-input" placeholder="輸入標籤並按 Enter" onkeypress="handleTagInput(event)">
+            `;
+        }
+        
+        function removeTag(text) {
+            currentTags = currentTags.filter(t => t.text !== text);
+            updateTagsDisplay();
+        }
+        
+        // Subtasks functions
+        function addSubtaskInput() {
+            const container = document.getElementById('subtasks-container');
+            container.innerHTML += `
+                <div class="subtask-item">
+                    <input type="checkbox" onchange="updateSubtaskStatus(this)">
+                    <input type="text" placeholder="輸入子任務" onkeypress="handleSubtaskInput(event, this)">
+                    <button class="task-btn" onclick="removeSubtask(this)">✕</button>
+                </div>
+            `;
+        }
+        
+        function handleSubtaskInput(e, input) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addSubtaskInput();
+            }
+        }
+        
+        function removeSubtask(btn) {
+            const container = document.getElementById('subtasks-container');
+            if (container.children.length > 1) {
+                btn.parentElement.remove();
+            }
+        }
+        
+        function updateSubtaskStatus(checkbox) {
+            // Just for visual feedback
+        }
+        
+        function getSubtasks() {
+            const items = document.querySelectorAll('#subtasks-container .subtask-item');
+            return Array.from(items).map(item => ({
+                text: item.querySelector('input[type="text"]').value,
+                completed: item.querySelector('input[type="checkbox"]').checked
+            })).filter(st => st.text.trim());
+        }
+        
+        function toggleSubtask(taskId, subtaskIndex) {
+            const task = tasks.find(t => t.id === taskId);
+            if (task && task.subtasks[subtaskIndex]) {
+                task.subtasks[subtaskIndex].completed = !task.subtasks[subtaskIndex].completed;
+                render();
+            }
+        }
+        
+        // Save task
         function saveTask() {
             const title = document.getElementById('task-title').value.trim();
-            const priority = document.getElementById('task-priority').value;
-            
             if (!title) {
                 alert('請輸入任務名稱');
                 return;
             }
             
+            const description = document.getElementById('task-desc').value.trim();
+            const due = document.getElementById('task-due').value;
+            const subtasks = getSubtasks();
+            
             if (editingTaskId) {
                 const task = tasks.find(t => t.id === editingTaskId);
-                task.title = title;
-                task.priority = priority;
+                if (task) {
+                    task.title = title;
+                    task.description = description;
+                    task.due = due;
+                    task.tags = currentTags;
+                    task.subtasks = subtasks;
+                }
             } else {
                 tasks.push({
                     id: Date.now(),
                     title,
-                    priority,
+                    description,
+                    due,
+                    tags: currentTags,
+                    subtasks,
                     status: currentStatus,
+                    board: currentBoard,
                     created: new Date().toISOString()
                 });
             }
@@ -423,9 +1015,16 @@
             }
         }
         
-        function editTask(id) {
+        function archiveTask(id) {
             const task = tasks.find(t => t.id === id);
-            openModal(task.status, id);
+            if (task) {
+                task.status = 'archive';
+                render();
+            }
+        }
+        
+        function editTask(id) {
+            openModal(tasks.find(t => t.id === id).status, id);
         }
         
         // Drag & Drop
@@ -462,11 +1061,16 @@
         });
         
         // Close modal on outside click
-        document.getElementById('task-modal').addEventListener('click', e => {
-            if (e.target.id === 'task-modal') closeModal();
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', e => {
+                if (e.target === modal) {
+                    modal.classList.remove('active');
+                }
+            });
         });
         
-        // Initial render
+        // Initialize
+        updateBoardSelector();
         render();
     </script>
 </body>
